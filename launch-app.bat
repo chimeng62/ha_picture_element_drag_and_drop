@@ -17,16 +17,29 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Check if dist folder exists
-if not exist "dist" (
+:: Check if dist folder exists or if it has GitHub Pages paths
+if not exist "dist\index.html" (
     echo Building the app for the first time...
     echo This may take a minute...
     echo.
-    call npm run build
+    call npm run build:local
     if errorlevel 1 (
         echo ERROR: Build failed. Please check for errors above.
         pause
         exit /b 1
+    )
+) else (
+    :: Check if the current build has GitHub Pages paths
+    findstr "/ha_picture_element_drag_and_drop/" dist\index.html >nul
+    if not errorlevel 1 (
+        echo Rebuilding for local use...
+        echo.
+        call npm run build:local
+        if errorlevel 1 (
+            echo ERROR: Build failed. Please check for errors above.
+            pause
+            exit /b 1
+        )
     )
 )
 

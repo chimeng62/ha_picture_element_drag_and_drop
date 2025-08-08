@@ -41,8 +41,8 @@ if not exist "node_modules" (
 )
 
 :: Build the app
-echo Building the app...
-call npm run build
+echo Building the app for local use...
+call npm run build:local
 if errorlevel 1 (
     echo ERROR: Build failed
     pause

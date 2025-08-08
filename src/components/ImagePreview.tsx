@@ -124,17 +124,37 @@ export const ImagePreview = ({ config, onElementMove, onImageDrop, showPlacehold
     return element;
   };
 
+  // Check if there's an actual image to display (not just a path for HA)
+  const hasActualImage = () => {
+    if (!config.image) return false;
+    
+    // If it's a data URL (uploaded image), it's definitely available
+    if (config.image.startsWith('data:')) return true;
+    
+    // If it's an HTTP URL, consider it available
+    if (config.image.startsWith('http')) return true;
+    
+    // If it's a local path (/local/images/...), check if user actually uploaded something
+    // We only consider it "available" if the user has uploaded an actual image
+    if (config.image.startsWith('/local/')) {
+      const savedImage = localStorage.getItem('ha-picture-image');
+      return !!savedImage; // Only show if user has actually uploaded an image
+    }
+    
+    return true;
+  };
+
   return (
     <PreviewContainer 
       ref={containerRef}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      $hasImage={!!config.image}
+      $hasImage={hasActualImage()}
       $isDragOver={dragOver}
     >
       {/* Floor plan background image */}
-      {config.image && <BackgroundImage src={resolveImagePath(config.image)} alt="Floor Plan" />}
+      {hasActualImage() && <BackgroundImage src={resolveImagePath(config.image)} alt="Floor Plan" />}
       {/* Draggable elements (including humidifier images) */}
       {config.elements.map((element, index) => {
         const resolvedElement = resolveStateImage(element);
