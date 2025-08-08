@@ -30,6 +30,7 @@ export const YamlEditor = ({ value, onChange }: YamlEditorProps) => {
         defaultLanguage="yaml"
         value={value}
         onChange={handleEditorChange}
+        theme="vs-dark"
         options={{
           minimap: { enabled: false },
           wordWrap: 'on',

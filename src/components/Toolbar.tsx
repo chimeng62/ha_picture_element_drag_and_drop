@@ -65,9 +65,11 @@ interface ToolbarProps {
   onAddElement: (floor: string, id: string) => void;
   onAddHumidifier: (floor: string) => void;
   onFloorChange?: (floor: string) => void;
+  showPlaceholders?: boolean;
+  onTogglePlaceholders?: () => void;
 }
 
-export const Toolbar = ({ onAddElement, onAddHumidifier, onFloorChange }: ToolbarProps) => {
+export const Toolbar = ({ onAddElement, onAddHumidifier, onFloorChange, showPlaceholders, onTogglePlaceholders }: ToolbarProps) => {
   const [floor, setFloor] = useState('1');
   const [id, setId] = useState('1');
 
@@ -92,7 +94,7 @@ export const Toolbar = ({ onAddElement, onAddHumidifier, onFloorChange }: Toolba
         <SelectGroup>
           <Controls>
             <Label>Floor:</Label>
-            <Select value={floor} onChange={(e) => setFloor(e.target.value)}>
+            <Select value={floor} onChange={handleFloorChange}>
               {[1, 2, 3, 4, 5].map(num => (
                 <option key={num} value={num}>{num}</option>
               ))}
@@ -124,6 +126,15 @@ export const Toolbar = ({ onAddElement, onAddHumidifier, onFloorChange }: Toolba
           </Controls>
           <Button onClick={handleAddHumidifier}>
             Add Humidifier
+          </Button>
+        </SelectGroup>
+      </Box>
+
+      <Box>
+        <BoxTitle>Display Options</BoxTitle>
+        <SelectGroup>
+          <Button onClick={onTogglePlaceholders}>
+            {showPlaceholders ? 'Show Entity Names' : 'Show Placeholder Values'}
           </Button>
         </SelectGroup>
       </Box>

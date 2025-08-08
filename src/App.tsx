@@ -29,6 +29,10 @@ function App() {
     return localStorage.getItem('ha-picture-image');
   });
   
+  const [showPlaceholders, setShowPlaceholders] = useState(() => {
+    return localStorage.getItem('ha-show-placeholders') === 'true';
+  });
+  
   const [yamlContent, setYamlContent] = useState(() => {
     const saved = localStorage.getItem('ha-picture-yaml');
     return saved || defaultYaml;
@@ -222,12 +226,20 @@ function App() {
     updateConfig(newYaml);
   }, [yamlContent]);
 
+  const handleTogglePlaceholders = useCallback(() => {
+    const newValue = !showPlaceholders;
+    setShowPlaceholders(newValue);
+    localStorage.setItem('ha-show-placeholders', String(newValue));
+  }, [showPlaceholders]);
+
   return (
     <AppContainer>
       <Toolbar 
         onAddElement={handleAddElement} 
         onAddHumidifier={handleAddHumidifier} 
         onFloorChange={handleFloorChange}
+        showPlaceholders={showPlaceholders}
+        onTogglePlaceholders={handleTogglePlaceholders}
       />
       <EditorContainer>
         <YamlEditor value={yamlContent} onChange={handleYamlChange} />
@@ -235,6 +247,7 @@ function App() {
           config={config} 
           onElementMove={handleElementMove}
           onImageDrop={handleImageDrop}
+          showPlaceholders={showPlaceholders}
         />
       </EditorContainer>
     </AppContainer>

@@ -34,15 +34,11 @@ const BackgroundImage = styled.img`
 interface ImagePreviewProps {
   config: PictureElementsConfig;
   onElementMove: (elementIndex: number, newLeft: string, newTop: string) => void;
-}
-
-interface ImagePreviewProps {
-  config: PictureElementsConfig;
-  onElementMove: (elementIndex: number, newLeft: string, newTop: string) => void;
   onImageDrop?: (file: File) => void;
+  showPlaceholders?: boolean;
 }
 
-export const ImagePreview = ({ config, onElementMove, onImageDrop }: ImagePreviewProps) => {
+export const ImagePreview = ({ config, onElementMove, onImageDrop, showPlaceholders }: ImagePreviewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -75,6 +71,7 @@ export const ImagePreview = ({ config, onElementMove, onImageDrop }: ImagePrevie
           element={el}
           containerRef={containerRef}
           onDragStop={(left, top) => onElementMove(index, left, top)}
+          showPlaceholders={showPlaceholders}
         />
       ));
     }
@@ -85,6 +82,7 @@ export const ImagePreview = ({ config, onElementMove, onImageDrop }: ImagePrevie
         element={element}
         containerRef={containerRef}
         onDragStop={(left, top) => onElementMove(index, left, top)}
+        showPlaceholders={showPlaceholders}
       />
     );
   };
