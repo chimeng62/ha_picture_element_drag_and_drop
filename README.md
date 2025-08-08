@@ -20,8 +20,18 @@ A visual editor for creating and editing Home Assistant picture-elements configu
 - **styled-components** for CSS-in-JS styling
 - **js-yaml** for YAML parsing and generation
 
-## 📦 Installation
+## 📦 Quick Start
 
+### 🌐 **Online Version (GitHub Pages)**
+Visit the live app: `https://chimeng62.github.io/ha_picture_element_drag_and_drop/`
+
+### 💻 **Local Portable Version**
+1. Download/clone this repository
+2. Double-click `SETUP.bat` (Windows) for first-time setup
+3. Double-click `launch-app.bat` to launch anytime
+4. App opens at `http://localhost:3000`
+
+### 🔧 **Development Setup**
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -184,6 +194,18 @@ src/
 3. Ensure your floor plan images are in `/config/www/images/`
 4. Verify entity names match your actual Home Assistant entities
 
-## 📜 License
+## � Deployment Options
+
+### **GitHub Pages (Online)**
+- See `GITHUB-PAGES.md` for deployment instructions
+- Automatic deployment on every push to main
+- Live at: `https://chimeng62.github.io/ha_picture_element_drag_and_drop/`
+
+### **Portable Local App**
+- See `PORTABLE-README.md` for setup instructions
+- Double-click `launch-app.bat` to run locally
+- No internet required, runs at `http://localhost:3000`
+
+## �📜 License
 
 This project is open source and available under the MIT License.
