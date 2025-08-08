@@ -3,7 +3,7 @@ import type { PictureElement } from '../types/ha-types';
 import { useDrag } from '@use-gesture/react';
 import styled from 'styled-components';
 
-const ElementContainer = styled.div<{ $left: string; $top: string }>`
+const ElementContainer = styled.div<{ $left: string; $top: string; $isDeleteMode: boolean }>`
   position: absolute;
   cursor: move;
   user-select: none;
@@ -18,6 +18,82 @@ const ElementContainer = styled.div<{ $left: string; $top: string }>`
   overflow: visible;
   z-index: 10;
   contain: layout; /* Optimize for layout changes */
+  
+  ${props => props.$isDeleteMode && `
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 2px solid #dc3545;
+    border-radius: 4px;
+    padding: 2px;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.3);
+  `}
+
+  &:hover .delete-button {
+    opacity: 1;
+  }
+`;
+
+const DeleteButton = styled.button`
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+  
+  &:hover {
+    background-color: #c82333;
+    opacity: 1 !important;
+  }
+`;
+
+const ConfirmContainer = styled.div`
+  position: absolute;
+  top: -40px;
+  right: -10px;
+  background: white;
+  border: 2px solid #dc3545;
+  border-radius: 6px;
+  padding: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  gap: 4px;
+  z-index: 30;
+`;
+
+const ConfirmButton = styled.button<{ $isConfirm?: boolean }>`
+  padding: 4px 8px;
+  border: none;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  ${props => props.$isConfirm ? `
+    background-color: #dc3545;
+    color: white;
+    &:hover {
+      background-color: #c82333;
+    }
+  ` : `
+    background-color: #6c757d;
+    color: white;
+    &:hover {
+      background-color: #5a6268;
+    }
+  `}
 `;
 
 interface DraggableElementProps {
@@ -27,9 +103,10 @@ interface DraggableElementProps {
   onDragStart?: () => void;
   onDragEnd?: () => void;
   showPlaceholders?: boolean;
+  onDelete?: (element: PictureElement) => void;
 }
 
-export const DraggableElement = ({ element, containerRef, onDragStop, onDragStart, onDragEnd, showPlaceholders = true }: DraggableElementProps) => {
+export const DraggableElement = ({ element, containerRef, onDragStop, onDragStart, onDragEnd, showPlaceholders = true, onDelete }: DraggableElementProps) => {
   const [{ left, top }, setPosition] = useState(() => {
     return {
       left: element.style.left,
@@ -39,6 +116,25 @@ export const DraggableElement = ({ element, containerRef, onDragStop, onDragStar
   const elementRef = useRef<HTMLDivElement>(null);
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
   const [dragStartPosition, setDragStartPosition] = useState<{ left: number; top: number } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(element);
+    }
+    setShowDeleteConfirm(false);
+  };
+
+  const handleCancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(false);
+  };
 
   // Track container dimensions for consistent sizing
   useEffect(() => {
@@ -200,8 +296,28 @@ export const DraggableElement = ({ element, containerRef, onDragStop, onDragStar
       {...bind()}
       $left={left}
       $top={top}
+      $isDeleteMode={showDeleteConfirm}
     >
       {renderContent()}
+      {onDelete && !showDeleteConfirm && (
+        <DeleteButton
+          className="delete-button"
+          onClick={handleDeleteClick}
+          title="Delete element"
+        >
+          ×
+        </DeleteButton>
+      )}
+      {onDelete && showDeleteConfirm && (
+        <ConfirmContainer>
+          <ConfirmButton $isConfirm onClick={handleConfirmDelete}>
+            Delete
+          </ConfirmButton>
+          <ConfirmButton onClick={handleCancelDelete}>
+            Cancel
+          </ConfirmButton>
+        </ConfirmContainer>
+      )}
     </ElementContainer>
   );
 };

@@ -7,6 +7,8 @@ const EditorContainer = styled.div`
   height: 100%;
   width: 30%;
   border-right: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
 
   /* Custom highlighting styles for Monaco Editor */
   .highlight-line {
@@ -24,15 +26,66 @@ const EditorContainer = styled.div`
   }
 `;
 
+const EditorHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #2d2d2d;
+  border-bottom: 1px solid #555;
+`;
+
+const EditorTitle = styled.span`
+  color: #f8f8f2;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+const ResetButton = styled.button`
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #c82333;
+  }
+`;
+
+const EditorWrapper = styled.div`
+  flex: 1;
+`;
+
 interface YamlEditorProps {
   value: string;
   onChange: (value: string) => void;
   highlightLines?: number[]; // Array of line numbers to highlight
   highlightText?: string; // Specific text to highlight
+  onReset?: () => void; // Callback for reset functionality
 }
 
-export const YamlEditor = ({ value, onChange, highlightLines = [], highlightText }: YamlEditorProps) => {
+const DEFAULT_YAML = `# Default picture-elements configuration
+# Drag your floor plan image and add elements using the toolbar above
+type: picture-elements
+image: /local/images/floor_plan_1st_floor.png
+elements: []`;
+
+export const YamlEditor = ({ value, onChange, highlightLines = [], highlightText, onReset }: YamlEditorProps) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+
+  const handleReset = () => {
+    if (window.confirm('Are you sure you want to reset the YAML to default? This will remove all current elements and cannot be undone.')) {
+      if (onReset) {
+        onReset();
+      } else {
+        onChange(DEFAULT_YAML);
+      }
+    }
+  };
 
   const handleEditorChange = useCallback(
     (newValue: string | undefined) => {
@@ -112,20 +165,29 @@ export const YamlEditor = ({ value, onChange, highlightLines = [], highlightText
 
   return (
     <EditorContainer>
-      <Editor
-        height="100%"
-        defaultLanguage="yaml"
-        value={value}
-        onChange={handleEditorChange}
-        onMount={handleEditorDidMount}
-        theme="vs-dark"
-        options={{
-          minimap: { enabled: false },
-          wordWrap: 'on',
-          lineNumbers: 'on',
-          scrollBeyondLastLine: false,
-        }}
-      />
+      <EditorHeader>
+        <EditorTitle>YAML Configuration</EditorTitle>
+        <ResetButton onClick={handleReset}>
+          Reset to Default
+        </ResetButton>
+      </EditorHeader>
+      <EditorWrapper>
+        <Editor
+          height="100%"
+          defaultLanguage="yaml"
+          value={value}
+          onChange={handleEditorChange}
+          onMount={handleEditorDidMount}
+          theme="vs-dark"
+          options={{
+            minimap: { enabled: false },
+            wordWrap: 'on',
+            lineNumbers: 'on',
+            scrollBeyondLastLine: false,
+            fontSize: 12,
+          }}
+        />
+      </EditorWrapper>
     </EditorContainer>
   );
 };

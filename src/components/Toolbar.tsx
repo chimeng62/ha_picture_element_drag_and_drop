@@ -209,14 +209,14 @@ export const Toolbar = ({ onAddElement, onAddHumidifier, onFloorChange, showPlac
             <Controls>
               <Label>Floor:</Label>
               <Select value={floor} onChange={handleFloorChange}>
-                {[1, 2, 3, 4, 5].map(num => (
+                {[1, 2, 3, 4, 5, 6].map(num => (
                   <option key={num} value={num}>{num}</option>
                 ))}
               </Select>
 
               <Label>ID:</Label>
               <Select value={id} onChange={(e) => setId(e.target.value)}>
-                {[1, 2, 3, 4, 5].map(num => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
                   <option key={num} value={num}>{num}</option>
                 ))}
               </Select>
@@ -238,7 +238,7 @@ export const Toolbar = ({ onAddElement, onAddHumidifier, onFloorChange, showPlac
             <Controls>
               <Label>Floor:</Label>
               <Select value={floor} onChange={handleFloorChange}>
-                {[1, 2, 3, 4, 5].map(num => (
+                {[1, 2, 3, 4, 5, 6].map(num => (
                   <option key={num} value={num}>{num}</option>
                 ))}
               </Select>

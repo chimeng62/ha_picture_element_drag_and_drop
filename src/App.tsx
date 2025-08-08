@@ -4,7 +4,7 @@ import { YamlEditor } from './components/YamlEditor';
 import { ImagePreview } from './components/ImagePreview';
 import { Toolbar } from './components/Toolbar';
 import { parseYaml, updateElementPosition, generateYaml, addHumidifierGroup } from './utils/yaml-utils';
-import type { PictureElementsConfig } from './types/ha-types';
+import type { PictureElementsConfig, PictureElement } from './types/ha-types';
 
 const AppContainer = styled.div`
   display: flex;
@@ -234,6 +234,47 @@ function App() {
     localStorage.setItem('ha-show-placeholders', String(newValue));
   }, [showPlaceholders]);
 
+  const handleDeleteElement = useCallback((elementToDelete: PictureElement) => {
+    const parsedConfig = parseYaml(yamlContent);
+    
+    if (elementToDelete.type === 'state-label' && 'entity' in elementToDelete && elementToDelete.entity.includes('_temp')) {
+      // This is a temperature sensor, find and remove the pair
+      const tempEntityPattern = elementToDelete.entity.replace('_temp', '');
+      
+      // Remove both temperature and humidity sensors
+      parsedConfig.elements = parsedConfig.elements.filter(el => 
+        !(el.type === 'state-label' && 'entity' in el &&
+          (el.entity === elementToDelete.entity || el.entity === `${tempEntityPattern}_humidity`))
+      );
+    } else if (elementToDelete.type === 'state-label' && 'entity' in elementToDelete && elementToDelete.entity.includes('_humidity')) {
+      // This is a humidity sensor, find and remove the pair
+      const tempEntityPattern = elementToDelete.entity.replace('_humidity', '');
+      
+      // Remove both temperature and humidity sensors
+      parsedConfig.elements = parsedConfig.elements.filter(el => 
+        !(el.type === 'state-label' && 'entity' in el &&
+          (el.entity === `${tempEntityPattern}_temp` || el.entity === elementToDelete.entity))
+      );
+    } else {
+      // For other elements (like humidifiers), just remove the single element
+      parsedConfig.elements = parsedConfig.elements.filter(el => {
+        if (el.type !== elementToDelete.type) return true;
+        
+        // Check if both elements have entity property
+        if ('entity' in el && 'entity' in elementToDelete) {
+          return el.entity !== elementToDelete.entity;
+        }
+        
+        return true;
+      });
+    }
+    
+    const newYaml = generateYaml(parsedConfig);
+    setYamlContent(newYaml);
+    localStorage.setItem('ha-picture-yaml', newYaml);
+    updateConfig(newYaml);
+  }, [yamlContent, updateConfig]);
+
   const getHighlightedLines = useCallback(() => {
     if (draggingElementIndex === null) return [];
 
@@ -302,6 +343,7 @@ function App() {
           showPlaceholders={showPlaceholders}
           onElementDragStart={setDraggingElementIndex}
           onElementDragEnd={() => setDraggingElementIndex(null)}
+          onElementDelete={handleDeleteElement}
         />
       </EditorContainer>
     </AppContainer>
