@@ -20,6 +20,12 @@ Your repository is now configured for automatic GitHub Pages deployment!
    - Under **Source**, select **GitHub Actions**
    - Save the changes
 
+   **Alternative if above doesn't work:**
+   - Under **Source**, select **Deploy from a branch**
+   - Select **gh-pages** branch
+   - Select **/ (root)** folder
+   - Save (the workflow will create this branch automatically)
+
 3. **Wait for Build:**
    - Go to **Actions** tab in your repository
    - Watch the deployment workflow run
@@ -87,6 +93,14 @@ Your local setup still works perfectly:
 - Both local and GitHub Pages versions work independently
 
 ## 🔧 **Troubleshooting:**
+
+**"HttpError: Not Found" or "Get Pages site failed"?**
+1. Try the alternative workflow: Use `deploy-simple.yml` instead
+2. In repository Settings → Pages:
+   - Change Source to "Deploy from a branch"
+   - Select "gh-pages" branch (created by workflow)
+   - Select "/ (root)" folder
+3. The simpler workflow uses `peaceiris/actions-gh-pages` which is more reliable
 
 **Build fails?**
 - Check the Actions tab for error details
