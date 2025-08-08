@@ -21,39 +21,8 @@ const EditorContainer = styled.div`
 `;
 
 const defaultYaml = `type: picture-elements
-elements:
-  - type: state-label
-    entity: sensor.temp_1f_1_temp
-    prefix: 🌡️
-    style:
-      left: 42.4%
-      top: 42.4%
-      color: red
-      font-size: 14px
-  - type: state-label
-    entity: sensor.temp_1f_1_humidity
-    prefix: 1 💧
-    style:
-      left: 32.6%
-      top: 46.2%
-      color: red
-      font-size: 14px
-  - type: state-label
-    entity: sensor.temp_1f_2_temp
-    prefix: 🌡️
-    style:
-      left: 65.4%
-      top: 47.2%
-      color: red
-      font-size: 14px
-  - type: state-label
-    entity: sensor.temp_1f_2_humidity
-    prefix: 2 💧
-    style:
-      left: 64.4%
-      top: 50%
-      color: red
-      font-size: 14px`;
+image: /local/images/floor_plan_1st_floor.png
+elements: []`;
 
 function App() {
   const [draggedImage, setDraggedImage] = useState<string | null>(() => {
@@ -66,13 +35,23 @@ function App() {
   });
 
   const [config, setConfig] = useState<PictureElementsConfig>(() => {
-    const saved = localStorage.getItem('ha-picture-yaml');
-    const savedImage = localStorage.getItem('ha-picture-image');
-    const parsedConfig = parseYaml(saved || defaultYaml);
-    if (savedImage) {
-      parsedConfig.image = savedImage;
+    try {
+      const saved = localStorage.getItem('ha-picture-yaml');
+      const savedImage = localStorage.getItem('ha-picture-image');
+      const parsedConfig = parseYaml(saved || defaultYaml);
+      return {
+        ...parsedConfig,
+        image: savedImage || parsedConfig.image,
+        elements: parsedConfig.elements || []
+      };
+    } catch (error) {
+      console.error('Error initializing config:', error);
+      return {
+        type: 'picture-elements',
+        image: '/local/images/floor_plan_1st_floor.png',
+        elements: []
+      };
     }
-    return parsedConfig;
   });
 
   const updateConfig = useCallback((yaml: string) => {
@@ -81,12 +60,17 @@ function App() {
       const savedImage = localStorage.getItem('ha-picture-image');
       const newConfig = {
         ...parsedConfig,
-        image: savedImage || draggedImage || parsedConfig.image,
-        elements: parsedConfig.elements || []
+        image: savedImage || draggedImage || parsedConfig.image || '/local/images/floor_plan_1st_floor.png',
+        elements: Array.isArray(parsedConfig.elements) ? parsedConfig.elements : []
       };
       setConfig(newConfig);
     } catch (error) {
       console.error('Error parsing YAML:', error);
+      setConfig({
+        type: 'picture-elements',
+        image: '/local/images/floor_plan_1st_floor.png',
+        elements: []
+      });
     }
   }, [draggedImage]);
 
@@ -131,14 +115,60 @@ function App() {
     reader.readAsDataURL(file);
   }, [config, yamlContent]);
 
-  const handleAddHumidifier = useCallback((floor: string) => {
-    const defaultPositions = [
-      { top: '24%', left: '82%', width: '15%' },
-      { top: '49%', left: '63%', width: '15%' },
-      { top: '68%', left: '65%', width: '15%' }
-    ];
+  const getFloorPlanPath = (floor: string): string => {
+    const floorText = floor === '1' ? '1st' : 
+                      floor === '2' ? '2nd' : 
+                      floor === '3' ? '3rd' : 
+                      `${floor}th`;
+    return `/local/images/floor_plan_${floorText}_floor.png`;
+  };
 
-    const newYaml = addHumidifierGroup(yamlContent, floor, defaultPositions);
+  const handleFloorChange = useCallback((floor: string) => {
+    const parsedConfig = parseYaml(yamlContent);
+    parsedConfig.image = getFloorPlanPath(floor);
+    const newYaml = generateYaml(parsedConfig);
+    setYamlContent(newYaml);
+    localStorage.setItem('ha-picture-yaml', newYaml);
+    updateConfig(newYaml);
+  }, [yamlContent, updateConfig]);
+
+  const handleAddHumidifier = useCallback((floor: string) => {
+    const parsedConfig = parseYaml(yamlContent);
+    parsedConfig.elements = parsedConfig.elements || [];
+
+    // Update floor plan image first
+    parsedConfig.image = getFloorPlanPath(floor);
+
+    // Create new humidifier element
+    const newHumidifier = {
+      type: 'image' as const,
+      entity: `switch.switch_humidifier_${floor}f_floor`,
+      state_image: {
+        'on': '/local/images/gif/on_humidifier.gif',
+        'off': '/local/images/gif/off_humidifier.png',
+        'unavailable': '/local/images/gif/off_humidifier.png'
+      },
+      style: {
+        top: '0%',
+        left: '0%',
+        width: '15%'
+      }
+    };
+
+    // Find the last image element index
+    const lastImageIndex = [...parsedConfig.elements].reverse()
+      .findIndex(el => el.type === 'image');
+
+    if (lastImageIndex === -1) {
+      // If no image found, add to the beginning
+      parsedConfig.elements.unshift(newHumidifier);
+    } else {
+      // Insert after the last image
+      const insertPosition = parsedConfig.elements.length - lastImageIndex;
+      parsedConfig.elements.splice(insertPosition, 0, newHumidifier);
+    }
+
+    const newYaml = generateYaml(parsedConfig);
     setYamlContent(newYaml);
     localStorage.setItem('ha-picture-yaml', newYaml);
     updateConfig(newYaml);
@@ -150,8 +180,8 @@ function App() {
       entity: `sensor.temp_${floor}f_${id}_temp`,
       prefix: '🌡️',
       style: {
-        left: '60%',
-        top: '80%',
+        left: '3%',
+        top: '5%',
         color: 'red',
         'font-size': '14px'
       }
@@ -162,8 +192,8 @@ function App() {
       entity: `sensor.temp_${floor}f_${id}_humidity`,
       prefix: `${id} 💧`,
       style: {
-        left: '54.8%',
-        top: '83%',
+        left: '1.5%',
+        top: '8%',
         color: 'red',
         'font-size': '14px'
       }
@@ -172,15 +202,20 @@ function App() {
     const parsedConfig = parseYaml(yamlContent);
     parsedConfig.elements = parsedConfig.elements || [];
 
-    // Add new elements to the beginning of the array, right after elements: tag
-    const newElements = [tempElement, humidityElement, ...parsedConfig.elements];
-    parsedConfig.elements = newElements;
+    // Find the last state-label element index
+    const lastStateLabelIndex = [...parsedConfig.elements].reverse()
+      .findIndex(el => el.type === 'state-label');
     
-    const newConfig = {
-      ...parsedConfig,
-      elements: newElements
-    };
-    const newYaml = generateYaml(newConfig);
+    if (lastStateLabelIndex === -1) {
+      // If no state-label found, add to the end
+      parsedConfig.elements.push(tempElement, humidityElement);
+    } else {
+      // Insert after the last state-label
+      const insertPosition = parsedConfig.elements.length - lastStateLabelIndex;
+      parsedConfig.elements.splice(insertPosition, 0, tempElement, humidityElement);
+    }
+    
+    const newYaml = generateYaml(parsedConfig);
     
     setYamlContent(newYaml);
     localStorage.setItem('ha-picture-yaml', newYaml);
@@ -189,7 +224,11 @@ function App() {
 
   return (
     <AppContainer>
-      <Toolbar onAddElement={handleAddElement} onAddHumidifier={handleAddHumidifier} />
+      <Toolbar 
+        onAddElement={handleAddElement} 
+        onAddHumidifier={handleAddHumidifier} 
+        onFloorChange={handleFloorChange}
+      />
       <EditorContainer>
         <YamlEditor value={yamlContent} onChange={handleYamlChange} />
         <ImagePreview 

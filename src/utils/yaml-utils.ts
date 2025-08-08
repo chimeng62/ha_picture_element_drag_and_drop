@@ -4,7 +4,12 @@ import type { PictureElementsConfig, PictureElement, ConditionalElement } from '
 export const parseYaml = (yamlString: string): PictureElementsConfig => {
   try {
     const parsed = load(yamlString) as PictureElementsConfig;
-    return parsed;
+    // Ensure we always have an elements array
+    return {
+      ...parsed,
+      type: parsed.type || 'picture-elements',
+      elements: parsed.elements || []
+    };
   } catch (error) {
     console.error('Error parsing YAML:', error);
     throw error;

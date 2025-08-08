@@ -8,8 +8,8 @@ const ToolbarContainer = styled.div`
   border-bottom: 1px solid #ccc;
   padding: 10px;
   display: flex;
-  gap: 10px;
-  align-items: center;
+  gap: 20px;
+  align-items: flex-start;
 `;
 
 const Button = styled.button`
@@ -31,7 +31,26 @@ const Select = styled.select`
   margin-right: 8px;
 `;
 
+const Box = styled.div`
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: white;
+`;
+
+const BoxTitle = styled.h3`
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #333;
+`;
+
 const SelectGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const Controls = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
@@ -45,11 +64,18 @@ const Label = styled.label`
 interface ToolbarProps {
   onAddElement: (floor: string, id: string) => void;
   onAddHumidifier: (floor: string) => void;
+  onFloorChange?: (floor: string) => void;
 }
 
-export const Toolbar = ({ onAddElement, onAddHumidifier }: ToolbarProps) => {
+export const Toolbar = ({ onAddElement, onAddHumidifier, onFloorChange }: ToolbarProps) => {
   const [floor, setFloor] = useState('1');
   const [id, setId] = useState('1');
+
+  const handleFloorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newFloor = e.target.value;
+    setFloor(newFloor);
+    onFloorChange?.(newFloor);
+  };
 
   const handleAddElement = () => {
     onAddElement(floor, id);
@@ -61,29 +87,46 @@ export const Toolbar = ({ onAddElement, onAddHumidifier }: ToolbarProps) => {
 
   return (
     <ToolbarContainer>
-      <SelectGroup>
-        <Label>Floor:</Label>
-        <Select value={floor} onChange={(e) => setFloor(e.target.value)}>
-          {[1, 2, 3, 4, 5].map(num => (
-            <option key={num} value={num}>{num}</option>
-          ))}
-        </Select>
+      <Box>
+        <BoxTitle>Add Temperature Sensor</BoxTitle>
+        <SelectGroup>
+          <Controls>
+            <Label>Floor:</Label>
+            <Select value={floor} onChange={(e) => setFloor(e.target.value)}>
+              {[1, 2, 3, 4, 5].map(num => (
+                <option key={num} value={num}>{num}</option>
+              ))}
+            </Select>
 
-        <Label>ID:</Label>
-        <Select value={id} onChange={(e) => setId(e.target.value)}>
-          {[1, 2, 3, 4, 5].map(num => (
-            <option key={num} value={num}>{num}</option>
-          ))}
-        </Select>
+            <Label>ID:</Label>
+            <Select value={id} onChange={(e) => setId(e.target.value)}>
+              {[1, 2, 3, 4, 5].map(num => (
+                <option key={num} value={num}>{num}</option>
+              ))}
+            </Select>
+          </Controls>
+          <Button onClick={handleAddElement}>
+            Add Sensor
+          </Button>
+        </SelectGroup>
+      </Box>
 
-      </SelectGroup>
-
-      <Button onClick={handleAddElement}>
-        Add Sensor
-      </Button>
-      <Button onClick={handleAddHumidifier}>
-        Add Humidifier Group
-      </Button>
+      <Box>
+        <BoxTitle>Add Humidifier</BoxTitle>
+        <SelectGroup>
+          <Controls>
+            <Label>Floor:</Label>
+            <Select value={floor} onChange={handleFloorChange}>
+              {[1, 2, 3, 4, 5].map(num => (
+                <option key={num} value={num}>{num}</option>
+              ))}
+            </Select>
+          </Controls>
+          <Button onClick={handleAddHumidifier}>
+            Add Humidifier
+          </Button>
+        </SelectGroup>
+      </Box>
     </ToolbarContainer>
   );
 };
