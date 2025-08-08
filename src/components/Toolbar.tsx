@@ -31,6 +31,38 @@ const Title = styled.h1`
   font-weight: 600;
 `;
 
+const QuickGuide = styled.div`
+  margin-top: 6px;
+  padding: 8px;
+  background-color: #e8f4fd;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+  font-size: 12px;
+  color: #333;
+  max-width: 300px;
+`;
+
+const GuideStep = styled.div`
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const StepNumber = styled.span`
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  flex-shrink: 0;
+`;
+
 const ButtonWithPreview = styled.div`
   position: relative;
   display: inline-block;
@@ -233,7 +265,27 @@ export const Toolbar = ({ onAddElement, onAddHumidifier, onFloorChange, showPlac
       </LeftSection>
 
       <RightSection>
-        <Title>Home Assistant picture-elements drag&drop</Title>
+        <div>
+          <Title>Home Assistant picture-elements drag&drop</Title>
+          <QuickGuide>
+            <GuideStep>
+              <StepNumber>1</StepNumber>
+              <span>Drag floor plan image into preview area</span>
+            </GuideStep>
+            <GuideStep>
+              <StepNumber>2</StepNumber>
+              <span>Add temperature sensors or humidifiers</span>
+            </GuideStep>
+            <GuideStep>
+              <StepNumber>3</StepNumber>
+              <span>Drag elements to desired positions</span>
+            </GuideStep>
+            <GuideStep>
+              <StepNumber>4</StepNumber>
+              <span>Copy YAML to Home Assistant</span>
+            </GuideStep>
+          </QuickGuide>
+        </div>
       </RightSection>
     </ToolbarContainer>
   );
