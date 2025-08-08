@@ -14,9 +14,10 @@ const ElementContainer = styled.div<{ $left: string; $top: string }>`
   transform-origin: top left;
   will-change: transform;
   backface-visibility: hidden;
-  box-sizing: border-box;
+  box-sizing: content-box; /* Use content-box for more predictable sizing */
   overflow: visible;
   z-index: 10;
+  contain: layout; /* Optimize for layout changes */
 `;
 
 interface DraggableElementProps {
@@ -34,6 +35,21 @@ export const DraggableElement = ({ element, containerRef, onDragStop, showPlaceh
     };
   });
   const elementRef = useRef<HTMLDivElement>(null);
+  const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+
+  // Track container dimensions for consistent sizing
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setContainerDimensions({ width: rect.width, height: rect.height });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, [containerRef]);
 
   // Watch for changes in element's style position
   useEffect(() => {
@@ -115,17 +131,36 @@ export const DraggableElement = ({ element, containerRef, onDragStop, showPlaceh
           </span>
         );
       case 'image':
+        // Calculate pixel width from percentage to prevent scaling issues
+        const getImageWidth = () => {
+          if (!element.style.width || !containerDimensions.width) {
+            return 'auto';
+          }
+          
+          // If it's a percentage, convert to pixels for stable sizing
+          if (element.style.width.includes('%')) {
+            const percentage = parseFloat(element.style.width);
+            // Apply scaling factor: make 15% display as 12% (12/15 = 0.8)
+            const scalingFactor = 0.8;
+            const adjustedPercentage = percentage * scalingFactor;
+            const pixelWidth = (adjustedPercentage / 100) * containerDimensions.width;
+            return `${pixelWidth}px`;
+          }
+          
+          // If it's already pixels or other units, use as-is
+          return element.style.width;
+        };
+
         return (
           <img
             src={element.image}
             alt={element.entity}
             style={{ 
-              width: element.style.width || 'auto',
+              width: getImageWidth(),
               height: 'auto',
               pointerEvents: 'none', // Prevent image from interfering with drag
-              maxWidth: 'none', // Prevent scaling down
-              minWidth: element.style.width || 'auto', // Maintain minimum width
-              flexShrink: 0 // Prevent flex shrinking
+              display: 'block', // Ensure consistent block behavior
+              objectFit: 'contain', // Maintain aspect ratio like HA
             }}
           />
         );
