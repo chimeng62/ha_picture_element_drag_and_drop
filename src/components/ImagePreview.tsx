@@ -36,9 +36,11 @@ interface ImagePreviewProps {
   onElementMove: (elementIndex: number, newLeft: string, newTop: string) => void;
   onImageDrop?: (file: File) => void;
   showPlaceholders?: boolean;
+  onElementDragStart?: (elementIndex: number) => void;
+  onElementDragEnd?: () => void;
 }
 
-export const ImagePreview = ({ config, onElementMove, onImageDrop, showPlaceholders }: ImagePreviewProps) => {
+export const ImagePreview = ({ config, onElementMove, onImageDrop, showPlaceholders, onElementDragStart, onElementDragEnd }: ImagePreviewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -71,6 +73,8 @@ export const ImagePreview = ({ config, onElementMove, onImageDrop, showPlacehold
           element={el}
           containerRef={containerRef}
           onDragStop={(left, top) => onElementMove(index, left, top)}
+          onDragStart={() => onElementDragStart?.(index)}
+          onDragEnd={onElementDragEnd}
           showPlaceholders={showPlaceholders}
         />
       ));
@@ -82,6 +86,8 @@ export const ImagePreview = ({ config, onElementMove, onImageDrop, showPlacehold
         element={element}
         containerRef={containerRef}
         onDragStop={(left, top) => onElementMove(index, left, top)}
+        onDragStart={() => onElementDragStart?.(index)}
+        onDragEnd={onElementDragEnd}
         showPlaceholders={showPlaceholders}
       />
     );

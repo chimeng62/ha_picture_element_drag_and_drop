@@ -10,6 +10,53 @@ const ToolbarContainer = styled.div`
   display: flex;
   gap: 20px;
   align-items: flex-start;
+  justify-content: space-between;
+`;
+
+const LeftSection = styled.div`
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+`;
+
+const RightSection = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const Title = styled.h1`
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+  font-weight: 600;
+`;
+
+const ButtonWithPreview = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const PreviewBox = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #2d2d2d;
+  color: #f8f8f2;
+  padding: 12px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  white-space: pre;
+  z-index: 1000;
+  min-width: 300px;
+  max-width: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #555;
+  display: none;
+
+  ${ButtonWithPreview}:hover & {
+    display: block;
+  }
 `;
 
 const Button = styled.button`
@@ -87,57 +134,107 @@ export const Toolbar = ({ onAddElement, onAddHumidifier, onFloorChange, showPlac
     onAddHumidifier(floor);
   };
 
+  const getTempSensorPreview = () => {
+    return `# Temperature Sensor YAML
+- type: state-label
+  entity: sensor.temp_${floor}f_${id}_temp
+  prefix: '🌡️'
+  style:
+    left: '3%'
+    top: '5%'
+    color: 'red'
+    font-size: '14px'
+- type: state-label
+  entity: sensor.temp_${floor}f_${id}_humidity
+  prefix: '${id} 💧'
+  style:
+    left: '1.5%'
+    top: '8%'
+    color: 'red'
+    font-size: '14px'`;
+  };
+
+  const getHumidifierPreview = () => {
+    return `# Humidifier YAML
+- type: image
+  entity: switch.switch_humidifier_${floor}f_floor
+  state_image:
+    'on': '/local/images/gif/on_humidifier.gif'
+    'off': '/local/images/gif/off_humidifier.png'
+    'unavailable': '/local/images/gif/off_humidifier.png'
+  style:
+    top: '0%'
+    left: '0%'
+    width: '15%'`;
+  };
+
   return (
     <ToolbarContainer>
-      <Box>
-        <BoxTitle>Add Temperature Sensor</BoxTitle>
-        <SelectGroup>
-          <Controls>
-            <Label>Floor:</Label>
-            <Select value={floor} onChange={handleFloorChange}>
-              {[1, 2, 3, 4, 5].map(num => (
-                <option key={num} value={num}>{num}</option>
-              ))}
-            </Select>
+      <LeftSection>
+        <Box>
+          <BoxTitle>Add Temperature Sensor</BoxTitle>
+          <SelectGroup>
+            <Controls>
+              <Label>Floor:</Label>
+              <Select value={floor} onChange={handleFloorChange}>
+                {[1, 2, 3, 4, 5].map(num => (
+                  <option key={num} value={num}>{num}</option>
+                ))}
+              </Select>
 
-            <Label>ID:</Label>
-            <Select value={id} onChange={(e) => setId(e.target.value)}>
-              {[1, 2, 3, 4, 5].map(num => (
-                <option key={num} value={num}>{num}</option>
-              ))}
-            </Select>
-          </Controls>
-          <Button onClick={handleAddElement}>
-            Add Sensor
-          </Button>
-        </SelectGroup>
-      </Box>
+              <Label>ID:</Label>
+              <Select value={id} onChange={(e) => setId(e.target.value)}>
+                {[1, 2, 3, 4, 5].map(num => (
+                  <option key={num} value={num}>{num}</option>
+                ))}
+              </Select>
+            </Controls>
+            <ButtonWithPreview>
+              <Button onClick={handleAddElement}>
+                Add Sensor
+              </Button>
+              <PreviewBox>
+                {getTempSensorPreview()}
+              </PreviewBox>
+            </ButtonWithPreview>
+          </SelectGroup>
+        </Box>
 
-      <Box>
-        <BoxTitle>Add Humidifier</BoxTitle>
-        <SelectGroup>
-          <Controls>
-            <Label>Floor:</Label>
-            <Select value={floor} onChange={handleFloorChange}>
-              {[1, 2, 3, 4, 5].map(num => (
-                <option key={num} value={num}>{num}</option>
-              ))}
-            </Select>
-          </Controls>
-          <Button onClick={handleAddHumidifier}>
-            Add Humidifier
-          </Button>
-        </SelectGroup>
-      </Box>
+        <Box>
+          <BoxTitle>Add Humidifier</BoxTitle>
+          <SelectGroup>
+            <Controls>
+              <Label>Floor:</Label>
+              <Select value={floor} onChange={handleFloorChange}>
+                {[1, 2, 3, 4, 5].map(num => (
+                  <option key={num} value={num}>{num}</option>
+                ))}
+              </Select>
+            </Controls>
+            <ButtonWithPreview>
+              <Button onClick={handleAddHumidifier}>
+                Add Humidifier
+              </Button>
+              <PreviewBox>
+                {getHumidifierPreview()}
+              </PreviewBox>
+            </ButtonWithPreview>
+          </SelectGroup>
+        </Box>
 
-      <Box>
-        <BoxTitle>Display Options</BoxTitle>
-        <SelectGroup>
-          <Button onClick={onTogglePlaceholders}>
-            {showPlaceholders ? 'Show Entity Names' : 'Show Placeholder Values'}
-          </Button>
-        </SelectGroup>
-      </Box>
+        <Box>
+          <BoxTitle>Display Options</BoxTitle>
+          <SelectGroup>
+            <Button onClick={onTogglePlaceholders}>
+              {showPlaceholders ? 'Show Entity Names' : 'Show Placeholder Values'}
+            </Button>
+          </SelectGroup>
+        </Box>
+      </LeftSection>
+
+      <RightSection>
+        <Title>Home Assistant picture-elements drag&drop</Title>
+      </RightSection>
     </ToolbarContainer>
   );
 };

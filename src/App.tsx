@@ -32,6 +32,8 @@ function App() {
   const [showPlaceholders, setShowPlaceholders] = useState(() => {
     return localStorage.getItem('ha-show-placeholders') === 'true';
   });
+
+  const [draggingElementIndex, setDraggingElementIndex] = useState<number | null>(null);
   
   const [yamlContent, setYamlContent] = useState(() => {
     const saved = localStorage.getItem('ha-picture-yaml');
@@ -232,6 +234,52 @@ function App() {
     localStorage.setItem('ha-show-placeholders', String(newValue));
   }, [showPlaceholders]);
 
+  const getHighlightedLines = useCallback(() => {
+    if (draggingElementIndex === null) return [];
+
+    // Find the lines in YAML that correspond to the dragging element
+    const lines = yamlContent.split('\n');
+    const elementLines: number[] = [];
+    let elementCount = 0;
+    let inElement = false;
+    let currentIndent = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      // Skip empty lines and comments
+      if (!trimmed || trimmed.startsWith('#')) continue;
+
+      // Check if this is the start of an element
+      if (trimmed.startsWith('- type:')) {
+        if (elementCount === draggingElementIndex) {
+          inElement = true;
+          currentIndent = line.indexOf('-');
+          elementLines.push(i + 1); // Monaco uses 1-based line numbers
+        } else if (inElement) {
+          // We've moved to the next element, stop collecting
+          break;
+        }
+        elementCount++;
+      } else if (inElement) {
+        // Check if we're still in the same element by indentation
+        const lineIndent = line.search(/\S/);
+        if (lineIndent > currentIndent) {
+          elementLines.push(i + 1);
+        } else if (lineIndent === currentIndent && trimmed.startsWith('-')) {
+          // New element at same level, stop collecting
+          break;
+        } else if (lineIndent <= currentIndent && trimmed) {
+          // Back to parent level or new section, stop collecting
+          break;
+        }
+      }
+    }
+
+    return elementLines;
+  }, [yamlContent, draggingElementIndex]);
+
   return (
     <AppContainer>
       <Toolbar 
@@ -242,12 +290,18 @@ function App() {
         onTogglePlaceholders={handleTogglePlaceholders}
       />
       <EditorContainer>
-        <YamlEditor value={yamlContent} onChange={handleYamlChange} />
+        <YamlEditor 
+          value={yamlContent} 
+          onChange={handleYamlChange}
+          highlightLines={getHighlightedLines()}
+        />
         <ImagePreview 
           config={config} 
           onElementMove={handleElementMove}
           onImageDrop={handleImageDrop}
           showPlaceholders={showPlaceholders}
+          onElementDragStart={setDraggingElementIndex}
+          onElementDragEnd={() => setDraggingElementIndex(null)}
         />
       </EditorContainer>
     </AppContainer>

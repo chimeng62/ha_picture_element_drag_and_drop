@@ -24,10 +24,12 @@ interface DraggableElementProps {
   element: PictureElement;
   containerRef: React.RefObject<HTMLDivElement | null>;
   onDragStop: (newLeft: string, newTop: string) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
   showPlaceholders?: boolean;
 }
 
-export const DraggableElement = ({ element, containerRef, onDragStop, showPlaceholders = true }: DraggableElementProps) => {
+export const DraggableElement = ({ element, containerRef, onDragStop, onDragStart, onDragEnd, showPlaceholders = true }: DraggableElementProps) => {
   const [{ left, top }, setPosition] = useState(() => {
     return {
       left: element.style.left,
@@ -36,6 +38,7 @@ export const DraggableElement = ({ element, containerRef, onDragStop, showPlaceh
   });
   const elementRef = useRef<HTMLDivElement>(null);
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+  const [dragStartPosition, setDragStartPosition] = useState<{ left: number; top: number } | null>(null);
 
   // Track container dimensions for consistent sizing
   useEffect(() => {
@@ -59,22 +62,44 @@ export const DraggableElement = ({ element, containerRef, onDragStop, showPlaceh
     });
   }, [element.style.left, element.style.top]);
 
-  const bind = useDrag(({ xy: [x, y], first, last, event }) => {
+  const bind = useDrag(({ xy: [x, y], initial: [initialX, initialY], first, last, event }) => {
     if (!containerRef.current) return;
     event.preventDefault();
     
     if (first) {
-      // Store initial position, don't modify it
+      // Capture the current position when drag starts
+      const currentLeft = parseFloat(left) || 0;
+      const currentTop = parseFloat(top) || 0;
+      setDragStartPosition({ left: currentLeft, top: currentTop });
+      
+      // Call drag start callback for highlighting
+      onDragStart?.();
       return;
     }
+
+    if (last) {
+      // Clear drag start position and call drag end callback
+      setDragStartPosition(null);
+      onDragEnd?.();
+    }
+
+    // Use the captured start position
+    if (!dragStartPosition) return;
 
     const containerRect = containerRef.current.getBoundingClientRect();
     const sensitivity = 0.2; // Reduce sensitivity (lower number = less sensitive)
 
-    // Calculate the new position based on the current mouse position and apply HA position correction
-    // Calculate raw percentages first
-    let newX = ((x - containerRect.left) / containerRect.width) * 100;
-    let newY = ((y - containerRect.top) / containerRect.height) * 100;
+    // Calculate movement delta in pixels from initial position
+    const deltaX = x - initialX;
+    const deltaY = y - initialY;
+
+    // Convert pixel delta to percentage delta
+    const deltaXPercent = (deltaX / containerRect.width) * 100;
+    const deltaYPercent = (deltaY / containerRect.height) * 100;
+
+    // Calculate new position by adding delta to start position
+    let newX = dragStartPosition.left + deltaXPercent;
+    let newY = dragStartPosition.top + deltaYPercent;
 
     // Apply bounds first to prevent overflow issues
     newX = Math.max(0, Math.min(100, newX));
@@ -92,7 +117,7 @@ export const DraggableElement = ({ element, containerRef, onDragStop, showPlaceh
 
     // Debug logging to track the positioning issue
     if (element.type === 'state-label' || element.type === 'image') {
-      console.log(`Element ${element.type} - Raw X: ${((x - containerRect.left) / containerRect.width) * 100}%, Final X: ${boundedX}%, Width: ${element.style.width}`);
+      console.log(`Element ${element.type} - Start: ${dragStartPosition.left}%, Delta: ${deltaXPercent.toFixed(1)}%, Final X: ${boundedX}%, Width: ${element.style.width}`);
     }
 
     setPosition({ left: newLeft, top: newTop });
