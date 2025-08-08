@@ -36,15 +36,6 @@ interface ImagePreviewProps {
   onElementMove: (elementIndex: number, newLeft: string, newTop: string) => void;
 }
 
-const getLocalImagePath = (path: string): string => {
-  if (!path) return '';
-  // If it's a URL, return as is
-  if (path.startsWith('http')) return path;
-  // If it's a local path starting with /local/, serve from public directory
-  if (path.startsWith('/local/')) return path;
-  return path;
-};
-
 interface ImagePreviewProps {
   config: PictureElementsConfig;
   onElementMove: (elementIndex: number, newLeft: string, newTop: string) => void;
@@ -78,19 +69,14 @@ export const ImagePreview = ({ config, onElementMove, onImageDrop }: ImagePrevie
 
   const renderElement = (element: PictureElement, index: number) => {
     if (element.type === 'conditional') {
-      return element.elements.map((el, subIndex) => {
-        const resolvedElement = el.type === 'image' 
-          ? { ...el, image: resolveImagePath(el.image) }
-          : el;
-        return (
-          <DraggableElement
-            key={`${index}-${subIndex}`}
-            element={resolvedElement}
-            containerRef={containerRef}
-            onDragStop={(left, top) => onElementMove(index, left, top)}
-          />
-        );
-      });
+      return element.elements.map((el, subIndex) => (
+        <DraggableElement
+          key={`${index}-${subIndex}`}
+          element={el}
+          containerRef={containerRef}
+          onDragStop={(left, top) => onElementMove(index, left, top)}
+        />
+      ));
     }
 
     return (
@@ -103,14 +89,32 @@ export const ImagePreview = ({ config, onElementMove, onImageDrop }: ImagePrevie
     );
   };
 
-  const resolveImagePath = (path: string): string => {
+  const resolveImagePath = (path: string | undefined): string => {
     if (!path) return '';
-    if (path.startsWith('data:')) return path; // Keep data URLs as is
-    if (path.startsWith('http')) return path; // Keep HTTP URLs as is
+    if (path.startsWith('data:')) return path;
+    if (path.startsWith('http')) return path;
     if (path.startsWith('/local/')) {
-      return path; // Keep local paths as is for elements
+      return path;
     }
     return path;
+  };
+
+  const resolveStateImage = (element: PictureElement): PictureElement => {
+    if (element.type === 'image') {
+      if (element.state_image) {
+        // For humidifiers, default to 'off' state image
+        return {
+          ...element,
+          image: resolveImagePath(element.state_image.off)
+        };
+      } else if (element.image) {
+        return {
+          ...element,
+          image: resolveImagePath(element.image)
+        };
+      }
+    }
+    return element;
   };
 
   return (
@@ -126,24 +130,8 @@ export const ImagePreview = ({ config, onElementMove, onImageDrop }: ImagePrevie
       {config.image && <BackgroundImage src={resolveImagePath(config.image)} alt="Floor Plan" />}
       {/* Draggable elements (including humidifier images) */}
       {config.elements.map((element, index) => {
-        // Handle both conditional groups and individual elements
-        if (element.type === 'conditional') {
-          return renderElement(element, index);
-        } else if (element.type === 'image') {
-          const resolvedImage = resolveImagePath(element.image);
-          return (
-            <DraggableElement
-              key={index}
-              element={{
-                ...element,
-                image: resolvedImage
-              }}
-              containerRef={containerRef}
-              onDragStop={(left, top) => onElementMove(index, left, top)}
-            />
-          );
-        }
-        return renderElement(element, index);
+        const resolvedElement = resolveStateImage(element);
+        return renderElement(resolvedElement, index);
       })}
     </PreviewContainer>
   );

@@ -25,36 +25,54 @@ export const updateElementPosition = (
   elementIndex: number,
   newLeft: string,
   newTop: string,
-  isHumidifierGroup = false
+  currentTop?: string,
+  currentLeft?: string
 ): string => {
   const config = parseYaml(yaml);
   const element = config.elements[elementIndex];
   
-  if (isHumidifierGroup && element.type === 'conditional') {
-    // Update all related humidifier positions
-    const targetLeft = newLeft;
-    const targetTop = newTop;
-    
-    // Find all related conditional elements with the same entity
-    const humidifierGroups = config.elements.filter(
-      (el): el is ConditionalElement => el.type === 'conditional' &&
-        el.conditions[0]?.entity === element.conditions[0]?.entity
-    );
-
-    // Update all matching positions across all states
-    humidifierGroups.forEach(group => {
-      const index = group.elements.findIndex(el => 
-        el.style.left === element.elements[0].style.left &&
-        el.style.top === element.elements[0].style.top
-      );
-      if (index !== -1) {
-        group.elements[index].style.left = targetLeft;
-        group.elements[index].style.top = targetTop;
-      }
+  // Check if this is a humidifier (image element with state_image)
+  const isHumidifier = element?.type === 'image' && 
+                      element.entity?.includes('humidifier') &&
+                      element.state_image;
+  
+  if (isHumidifier) {
+    console.log('Analyzing humidifier:', {
+      index: elementIndex,
+      position: {
+        current: {
+          top: element.style.top,
+          left: element.style.left
+        },
+        new: {
+          top: newTop,
+          left: newLeft
+        }
+      },
+      entity: element.entity,
+      states: element.state_image ? Object.keys(element.state_image) : []
     });
+    
+    // Update the position
+    if (element && element.style) {
+      element.style.left = newLeft;
+      element.style.top = newTop;
+      console.log('Updated humidifier position');
+    }
   } else if (element) {
-    element.style.left = newLeft;
-    element.style.top = newTop;
+    // Handle non-humidifier elements
+    if (!element.style) {
+      element.style = {
+        left: newLeft,
+        top: newTop
+      };
+    } else {
+      element.style.left = newLeft;
+      element.style.top = newTop;
+    }
+  } else {
+    console.error('Invalid element:', element);
+    return yaml;
   }
 
   return generateYaml(config);
@@ -66,25 +84,23 @@ export const addHumidifierGroup = (
   positions: Array<{ top: string; left: string; width: string }>
 ): string => {
   const config = parseYaml(yaml);
-  const states = ['on', 'off', 'unavailable'];
   const entity = `switch.switch_humidifier_${floor}f_floor`;
 
-  const createElements = (state: string) => ({
-    type: 'conditional' as const,
-    conditions: [{ entity, state }],
-    elements: positions.map(pos => ({
-      type: 'image' as const,
-      entity,
-      image: `/local/images/gif/${state === 'on' ? 'on_humidifier.gif' : 'off_humidifier.png'}`,
-      style: {
-        top: pos.top,
-        left: pos.left,
-        width: pos.width
-      }
-    }))
-  });
+  const newElements = positions.map(pos => ({
+    type: 'image' as const,
+    entity,
+    state_image: {
+      "on": '/local/images/gif/on_humidifier.gif',
+      "off": '/local/images/gif/off_humidifier.png',
+      "unavailable": '/local/images/gif/off_humidifier.png'
+    },
+    style: {
+      top: pos.top,
+      left: pos.left,
+      width: pos.width
+    }
+  }));
 
-  const newElements = states.map(state => createElements(state));
   config.elements = [...newElements, ...config.elements];
 
   return generateYaml(config);

@@ -16,10 +16,17 @@ export interface StateLabelElement extends BaseStyleElement {
   prefix?: string;
 }
 
+export interface StateImageMap {
+  'on': string;
+  'off': string;
+  'unavailable': string;
+}
+
 export interface ImageElement extends BaseStyleElement {
   type: 'image';
   entity: string;
-  image: string;
+  image?: string;
+  state_image?: StateImageMap;
 }
 
 export interface ConditionalElement extends BaseStyleElement {
