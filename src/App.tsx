@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { YamlEditor } from './components/YamlEditor';
 import { ImagePreview } from './components/ImagePreview';
 import { Toolbar } from './components/Toolbar';
-import { parseYaml, updateElementPosition, generateYaml, addHumidifierGroup } from './utils/yaml-utils';
+import { parseYaml, updateElementPosition, generateYaml } from './utils/yaml-utils';
 import type { PictureElementsConfig, PictureElement } from './types/ha-types';
 
 const AppContainer = styled.div`

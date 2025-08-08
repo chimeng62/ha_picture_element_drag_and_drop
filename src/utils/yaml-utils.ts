@@ -1,5 +1,5 @@
 import { load, dump } from 'js-yaml';
-import type { PictureElementsConfig, PictureElement, ConditionalElement } from '../types/ha-types';
+import type { PictureElementsConfig } from '../types/ha-types';
 
 export const parseYaml = (yamlString: string): PictureElementsConfig => {
   try {
@@ -29,9 +29,7 @@ export const updateElementPosition = (
   yaml: string,
   elementIndex: number,
   newLeft: string,
-  newTop: string,
-  currentTop?: string,
-  currentLeft?: string
+  newTop: string
 ): string => {
   const config = parseYaml(yaml);
   const element = config.elements[elementIndex];

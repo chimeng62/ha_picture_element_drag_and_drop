@@ -56,6 +56,27 @@ const ResetButton = styled.button`
   }
 `;
 
+const CopyButton = styled.button`
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-right: 8px;
+
+  &:hover {
+    background-color: #218838;
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 const EditorWrapper = styled.div`
   flex: 1;
 `;
@@ -84,6 +105,23 @@ export const YamlEditor = ({ value, onChange, highlightLines = [], highlightText
       } else {
         onChange(DEFAULT_YAML);
       }
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      // You could add a toast notification here if desired
+      console.log('YAML copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy YAML to clipboard:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = value;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
     }
   };
 
@@ -167,9 +205,14 @@ export const YamlEditor = ({ value, onChange, highlightLines = [], highlightText
     <EditorContainer>
       <EditorHeader>
         <EditorTitle>YAML Configuration</EditorTitle>
-        <ResetButton onClick={handleReset}>
-          Reset to Default
-        </ResetButton>
+        <ButtonGroup>
+          <CopyButton onClick={handleCopy}>
+            Copy YAML
+          </CopyButton>
+          <ResetButton onClick={handleReset}>
+            Reset to Default
+          </ResetButton>
+        </ButtonGroup>
       </EditorHeader>
       <EditorWrapper>
         <Editor
